@@ -1,0 +1,95 @@
+.App-logo {
+  height: 20vmin;
+  pointer-events: none;
+}
+
+.App {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+
+header {
+  padding: 20px 10px 10px;
+  background-color: #282c34;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(10px + 2vmin);
+  color: white;
+}
+
+#helpIcon {
+  width: 24px;
+  height: 24px;
+  background-color: #2020ff;
+  color: #fff;
+  font-size: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 12px;
+  margin-left: 10px;
+}
+
+main {
+  flex: 1;
+  align-self: stretch;  
+  justify-self: stretch;
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  overflow: auto;
+}
+
+footer {
+  background-color: #484c54;
+  display: flex;
+  padding: 10px;
+  flex-direction: row;
+  justify-content: flex-end;
+}
+
+section.help {
+  border: 1px solid#2020ff;
+  border-radius: 6px;
+  background-color: #e0e0ff;
+  padding: 10px;
+  margin-bottom: 10px;
+}
+
+.row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+.button {
+  display: flex;
+  margin-left: 10px;
+  padding: 10px 40px;
+  font-size: 16px;
+}
+
+label {
+  margin-left: 4px;
+}
+
+#save {
+  padding: 10px 40px;
+  background-color: #307040;
+  color: #ffffff;
+}
+
+ul {
+  margin: 10px 0px;
+  padding: 20;
+}
+
+h4 {
+  margin: 0;
+  padding: 0;
+}
