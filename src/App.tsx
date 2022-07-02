@@ -12,14 +12,14 @@ function App() {
   useEffect(() => { 
     if (config) {
       const lines = config.split('\n');
-      const audioDevicesListIndex = lines.findIndex(s => s.includes("[VoiceInterfaceVivox.AudioDevicesList]"));
-      const audioDevicesIndex = lines.findIndex(s => s.includes("[VoiceInterfaceVivox.AudioDevicesIndex]"));
-      const newMicrophoneGUIDs = lines.slice(audioDevicesListIndex + 1, audioDevicesIndex - 1);
+      const newMicrophoneGUIDs = lines.filter(l => l.startsWith('Microphone'));
       setMicrophoneGUIDs(newMicrophoneGUIDs);
-      const selectedMicLine = lines[audioDevicesIndex + 1];
-      const selectedMicIndexResult = selectedMicLine.match(/\d+/);
-      const selectedMicIndex = selectedMicIndexResult?.length ? Number(selectedMicIndexResult[0]) : null;
-      setSelectedMicrophoneGUID(selectedMicIndex ? newMicrophoneGUIDs[selectedMicIndex] : '');
+      const selectedMicLine = lines.find(l => l.startsWith('SelectedIndex='));
+      if (selectedMicLine) {
+        const selectedMicIndexResult = selectedMicLine.match(/\d+/);
+        const selectedMicIndex = selectedMicIndexResult?.length ? Number(selectedMicIndexResult[0]) : null;
+        setSelectedMicrophoneGUID(selectedMicIndex !== null ? newMicrophoneGUIDs[selectedMicIndex] : '');
+      }
     }
   }, [config]);
 
@@ -31,7 +31,7 @@ function App() {
     
   useEffect(() => {
     getEngineConfig();
-  }, [])
+  }, [getEngineConfig])
 
   const toggleShowHelp = () => setShowHelp(!showHelp);
 
