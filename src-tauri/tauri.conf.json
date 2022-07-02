@@ -8,7 +8,7 @@
   },
   "package": {
     "productName": "rising-storm-2-vietnam-microphone-fix",
-    "version": "0.1.0"
+    "version": "1.0.0"
   },
   "tauri": {
     "allowlist": {
@@ -27,8 +27,8 @@
     },
     "bundle": {
       "active": true,
-      "category": "DeveloperTool",
-      "copyright": "",
+      "category": "Utility",
+      "copyright": "(C) 2022 - Soft Block Refinery Skåne AB",
       "deb": {
         "depends": []
       },
@@ -40,8 +40,8 @@
         "icons/icon.icns",
         "icons/icon.ico"
       ],
-      "identifier": "com.tauri.dev",
-      "longDescription": "",
+      "identifier": "com.softblockrefinery.rs2micfix",
+      "longDescription": "Rising Storm 2 Vietnam - Mic Fix",
       "macOS": {
         "entitlements": null,
         "exceptionDomain": "",
