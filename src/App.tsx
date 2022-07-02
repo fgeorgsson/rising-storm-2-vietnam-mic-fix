@@ -4,34 +4,40 @@ import './App.css';
 import { invoke } from '@tauri-apps/api';
 
 function App() {
-  const [config, setConfig] = useState("apa")
+  const [config, setConfig] = useState<string>();
   const [microphoneGUIDs, setMicrophoneGUIDs] = useState<string[]>([]);
-  const [selectedMicrophoneIndex, setSelectedMicrophoneGUID] = useState<string>('');
+  const [selectedMicrophoneGUID, setSelectedMicrophoneGUID] = useState<string>('');
   const [showHelp, setShowHelp] = useState<boolean>(false);
   
-  useEffect(() => {
-    invoke('getEngineConfig', { delta: 0 }).then((result) => setConfig(result as string))
-  }, [])
-  
-  useEffect(() => {
-    // Find line "[VoiceInterfaceVivox.AudioDevicesList]"
-    const lines = config.split('\n');
-    const audioDevicesListIndex = lines.findIndex(s => s.includes("[VoiceInterfaceVivox.AudioDevicesList]"));
-    const audioDevicesIndex = lines.findIndex(s => s.includes("[VoiceInterfaceVivox.AudioDevicesIndex]"));
-    setMicrophoneGUIDs(lines.slice(audioDevicesListIndex + 1, audioDevicesIndex - 1));
-    const selectedMicLine = lines[audioDevicesIndex + 1];
-    const selectedMicIndexResult = selectedMicLine.match(/\d+/);
-    const selectedMicIndex = selectedMicIndexResult?.length ? Number(selectedMicIndexResult[0]) : null;
-    setSelectedMicrophoneGUID(selectedMicIndex ? microphoneGUIDs[selectedMicIndex] : '');
-
+  useEffect(() => { 
+    if (config) {
+      const lines = config.split('\n');
+      const audioDevicesListIndex = lines.findIndex(s => s.includes("[VoiceInterfaceVivox.AudioDevicesList]"));
+      const audioDevicesIndex = lines.findIndex(s => s.includes("[VoiceInterfaceVivox.AudioDevicesIndex]"));
+      const newMicrophoneGUIDs = lines.slice(audioDevicesListIndex + 1, audioDevicesIndex - 1);
+      setMicrophoneGUIDs(newMicrophoneGUIDs);
+      const selectedMicLine = lines[audioDevicesIndex + 1];
+      const selectedMicIndexResult = selectedMicLine.match(/\d+/);
+      const selectedMicIndex = selectedMicIndexResult?.length ? Number(selectedMicIndexResult[0]) : null;
+      setSelectedMicrophoneGUID(selectedMicIndex ? newMicrophoneGUIDs[selectedMicIndex] : '');
+    }
   }, [config]);
 
   const getEngineConfig = useCallback(async () => {
-    const result = await invoke('getEngineConfig', { delta: 1 }) as string
-    setConfig(result)    
-  }, [setConfig])
+    setConfig(undefined);
+    const result = await invoke('get_engine_config') as string;
+    setConfig(result);
+  }, [setConfig]);
+    
+  useEffect(() => {
+    getEngineConfig();
+  }, [])
 
   const toggleShowHelp = () => setShowHelp(!showHelp);
+
+  const onMicClick = (guid: string) => {
+    setSelectedMicrophoneGUID(guid);
+  }
   
   return (
     <div className="App">
@@ -59,8 +65,8 @@ function App() {
 
         <div className="microphones">
         {microphoneGUIDs.map(guid => (
-          <div className="microphone">
-            <input type="radio" id={guid} name="microphoneGuid" value={guid} checked={selectedMicrophoneIndex === guid} />
+          <div className="microphone" key={guid}>
+            <input type="radio" id={guid} name="microphoneGuid" value={guid} checked={selectedMicrophoneGUID === guid} onChange={() => onMicClick(guid)}/>
             <label htmlFor={guid}>{guid}</label>
           </div>
         ))}
