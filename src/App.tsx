@@ -1,24 +1,37 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import logo from './logo512.png';
 import './App.css';
 import { invoke } from '@tauri-apps/api';
 
+function getGuidForMicrophoneLine(line: string): string | null {
+  const match = line.match(/{[a-zA-Z0-9-]+}/);
+  return match ? match[0].toUpperCase() : null;
+}
+
 function App() {
   const [config, setConfig] = useState<string>();
-  const [microphoneGUIDs, setMicrophoneGUIDs] = useState<string[]>([]);
+  const [microphoneLines, setMicrophoneLines] = useState<string[]>([]);
   const [selectedMicrophoneGUID, setSelectedMicrophoneGUID] = useState<string>('');
+  const [deviceNamesAndGUIDs, setDeviceNamesAndGUIDs] = useState<Record<string, string>>({});
   const [showHelp, setShowHelp] = useState<boolean>(false);
+  const deviceData = useRef<string[]>();
   
   useEffect(() => { 
     if (config) {
       const lines = config.split('\n');
-      const newMicrophoneGUIDs = lines.filter(l => l.startsWith('Microphone'));
-      setMicrophoneGUIDs(newMicrophoneGUIDs);
+      const newMicrophoneLines = lines.filter(l => l.startsWith('Microphone'))
+      const newMicrophoneGUIDs = newMicrophoneLines
+        .map(l => l.match(/{[a-zA-Z0-9-]+}/))
+        .map(l => l ? l[0].toUpperCase() : null)
+        .filter(l => l !== null) as string[]
+        || [];
+      console.log(newMicrophoneGUIDs);
+      setMicrophoneLines(newMicrophoneGUIDs);
       const selectedMicLine = lines.find(l => l.startsWith('SelectedIndex='));
       if (selectedMicLine) {
         const selectedMicIndexResult = selectedMicLine.match(/\d+/);
         const selectedMicIndex = selectedMicIndexResult?.length ? Number(selectedMicIndexResult[0]) : null;
-        setSelectedMicrophoneGUID(selectedMicIndex !== null ? newMicrophoneGUIDs[selectedMicIndex] : '');
+        onMicClick(selectedMicIndex !== null ? newMicrophoneLines[selectedMicIndex] : '');
       }
     }
   }, [config]);
@@ -27,7 +40,30 @@ function App() {
     setConfig(undefined);
     const result = await invoke('get_engine_config') as string;
     setConfig(result);
+
+    const newDeviceData = await invoke('get_devices') as string;
+    let newDevices = newDeviceData ? newDeviceData.replaceAll('\r\n', '\n').split('\n').slice(4).filter(l => l !== "") : [];
+    const newDeviceRecords = newDevices.reduce((accumulator: Record<string, string>, micLine) => {
+      const match = micLine.match(/(.*\)).*}.([{}a-zA-Z0-9-]+)$/);
+      if (match?.length && match?.length> 2) {
+        accumulator[match[2]] = match[1];
+      }
+      return accumulator;
+    }, {});
+    console.log('newDevices', newDeviceRecords);
+    setDeviceNamesAndGUIDs(newDeviceRecords);
   }, [setConfig]);
+
+  const setEngineConfig = async () => {
+    if (config) {
+      console.log('selectedMicrophoneGUID', selectedMicrophoneGUID);
+      const index = microphoneLines.findIndex(l => l.toUpperCase().includes(selectedMicrophoneGUID));
+      console.log('New index', index);
+      const newConfig = config.replace(/SelectedIndex=\d+/, `SelectedIndex=${index}`);
+      const result = await invoke('set_engine_config', { newConfig }) as string;
+      alert(result);
+    }
+  }
     
   useEffect(() => {
     getEngineConfig();
@@ -35,9 +71,24 @@ function App() {
 
   const toggleShowHelp = () => setShowHelp(!showHelp);
 
-  const onMicClick = (guid: string) => {
-    setSelectedMicrophoneGUID(guid);
+  const onMicClick = (microphoneLine: string) => {
+    const guid = getGuidForMicrophoneLine(microphoneLine);
+    if (guid) {
+      setSelectedMicrophoneGUID(guid);
+    }
   }
+
+  const getNameForMicGuid = (guid: string) => {
+    return deviceNamesAndGUIDs[guid] || `Unidentified microphone ${guid}`;
+  }
+
+  const removeWriteLock = async () => {
+    const result = await invoke('remove_write_lock') as string;
+    alert(result);
+  }
+
+  console.log('selectedMicrophoneGUID', selectedMicrophoneGUID);
+  console.log('microphoneLines', microphoneLines);
   
   return (
     <div className="App">
@@ -64,10 +115,10 @@ function App() {
         )}
 
         <div className="microphones">
-        {microphoneGUIDs.map(guid => (
-          <div className="microphone" key={guid}>
-            <input type="radio" id={guid} name="microphoneGuid" value={guid} checked={selectedMicrophoneGUID === guid} onChange={() => onMicClick(guid)}/>
-            <label htmlFor={guid}>{guid}</label>
+        {microphoneLines.map(microphoneLine => (
+          <div className="microphone" key={microphoneLine}>
+            <input type="radio" id={microphoneLine} name="microphoneGuid" value={microphoneLine} checked={selectedMicrophoneGUID === microphoneLine} onChange={() => onMicClick(microphoneLine)}/>
+            <label htmlFor={microphoneLine}>{getNameForMicGuid(microphoneLine)}</label>
           </div>
         ))}
         </div>
@@ -75,8 +126,8 @@ function App() {
       
       <footer>
         <button className="button" onClick={getEngineConfig}>Reload config</button>
-        <button className="button">Remove write lock</button>
-        <button className="button" id="save">Save</button>
+        <button className="button" onClick={removeWriteLock}>Remove write lock</button>
+        <button className="button" onClick={setEngineConfig} id="save">Save</button>
       </footer>
     </div>
   );
