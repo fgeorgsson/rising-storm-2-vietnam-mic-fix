@@ -1,12 +1,8 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import logo from './logo512.png';
 import './App.css';
 import { invoke } from '@tauri-apps/api';
-
-function getGuidForMicrophoneLine(line: string): string | null {
-  const match = line.match(/{[a-zA-Z0-9-]+}/);
-  return match ? match[0].toUpperCase() : null;
-}
+import { getGuidForMicrophoneLine } from './utils';
 
 function App() {
   const [config, setConfig] = useState<string>();
@@ -14,9 +10,8 @@ function App() {
   const [selectedMicrophoneGUID, setSelectedMicrophoneGUID] = useState<string>('');
   const [deviceNamesAndGUIDs, setDeviceNamesAndGUIDs] = useState<Record<string, string>>({});
   const [showHelp, setShowHelp] = useState<boolean>(false);
-  const deviceData = useRef<string[]>();
-  
-  useEffect(() => { 
+
+  useEffect(() => {
     if (config) {
       const lines = config.split('\n');
       const newMicrophoneLines = lines.filter(l => l.startsWith('Microphone'))
@@ -45,7 +40,7 @@ function App() {
     let newDevices = newDeviceData ? newDeviceData.replaceAll('\r\n', '\n').split('\n').slice(4).filter(l => l !== "") : [];
     const newDeviceRecords = newDevices.reduce((accumulator: Record<string, string>, micLine) => {
       const match = micLine.match(/(.*\)).*}.([{}a-zA-Z0-9-]+)$/);
-      if (match?.length && match?.length> 2) {
+      if (match?.length && match?.length > 2) {
         accumulator[match[2]] = match[1];
       }
       return accumulator;
@@ -64,7 +59,7 @@ function App() {
       alert(result);
     }
   }
-    
+
   useEffect(() => {
     getEngineConfig();
   }, [getEngineConfig])
@@ -75,11 +70,13 @@ function App() {
     const guid = getGuidForMicrophoneLine(microphoneLine);
     if (guid) {
       setSelectedMicrophoneGUID(guid);
+    } else {
+      alert(`Could not find mic details for mic with guid ${guid}. See Help for troubleshooting tips.`);
     }
   }
 
   const getNameForMicGuid = (guid: string) => {
-    return deviceNamesAndGUIDs[guid] || `Unidentified microphone ${guid}`;
+    return deviceNamesAndGUIDs[guid] || `Unidentified microphone ${guid}. See Help troubleshooting tips.`;
   }
 
   const removeWriteLock = async () => {
@@ -95,35 +92,35 @@ function App() {
       <header>
         <img src={logo} className="App-logo" alt="logo" />
       </header>
-      
-      <main>      
+
+      <main>
         <div className="row">
           <h3>Select the microphone you want to use</h3>
           <button id="helpIcon" onClick={toggleShowHelp}>i</button>
-        </div>        
+        </div>
 
         {showHelp && (
-        <section className="help">
-          <h4>My mic is not listed</h4>
-          <ul id="help">
-            <li>Click "remove write protection"</li>          
-            <li>Start RS2 game so that it can detect new mic</li>
-            <li>Exit the game</li>
-            <li>Click "Reload config"</li>
-          </ul>
-        </section>
+          <section className="help">
+            <h4>My mic is not listed</h4>
+            <ul id="help">
+              <li>Click "remove write protection"</li>
+              <li>Start RS2 game so that it can detect new mic id:s</li>
+              <li>Exit the game</li>
+              <li>Click "Reload config"</li>
+            </ul>
+          </section>
         )}
 
         <div className="microphones">
-        {microphoneLines.map(microphoneLine => (
-          <div className="microphone" key={microphoneLine}>
-            <input type="radio" id={microphoneLine} name="microphoneGuid" value={microphoneLine} checked={selectedMicrophoneGUID === microphoneLine} onChange={() => onMicClick(microphoneLine)}/>
-            <label htmlFor={microphoneLine}>{getNameForMicGuid(microphoneLine)}</label>
-          </div>
-        ))}
+          {microphoneLines.map(microphoneLine => (
+            <div className="microphone" key={microphoneLine}>
+              <input type="radio" id={microphoneLine} name="microphoneGuid" value={microphoneLine} checked={selectedMicrophoneGUID === microphoneLine} onChange={() => onMicClick(microphoneLine)} />
+              <label htmlFor={microphoneLine}>{getNameForMicGuid(microphoneLine)}</label>
+            </div>
+          ))}
         </div>
       </main>
-      
+
       <footer>
         <button className="button" onClick={getEngineConfig}>Reload config</button>
         <button className="button" onClick={removeWriteLock}>Remove write lock</button>
