@@ -74,6 +74,10 @@ fn get_config_path_full() -> Result<String, String> {
 
 #[tauri::command]
 fn set_engine_config(new_config: String) -> Result<String, String> {
+  match remove_write_lock() {
+    Ok(_) => {},
+    Err(msg) => return Err(msg)
+  }
   match get_config_path_full() {
     Ok(config_path_full) => {
       match fs::write(&config_path_full, new_config) {

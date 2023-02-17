@@ -54,7 +54,11 @@ function App() {
       console.log('selectedMicrophoneGUID', selectedMicrophoneGUID);
       const index = microphoneLines.findIndex(l => l.toUpperCase().includes(selectedMicrophoneGUID));
       console.log('New index', index);
-      const newConfig = config.replace(/SelectedIndex=\d+/, `SelectedIndex=${index}`);
+      
+      let newConfig = config
+        .replace(/SelectedIndex=\d+/, `SelectedIndex=${index}`)
+        .replace(/AllowPeerVoice=[a-z]+/i, `AllowPeerVoice=True`);
+
       const result = await invoke('set_engine_config', { newConfig }) as string;
       alert(result);
     }
