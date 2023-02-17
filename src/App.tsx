@@ -83,10 +83,7 @@ function App() {
     const result = await invoke('remove_write_lock') as string;
     alert(result);
   }
-
-  console.log('selectedMicrophoneGUID', selectedMicrophoneGUID);
-  console.log('microphoneLines', microphoneLines);
-  
+ 
   return (
     <div className="App">
       <header>
