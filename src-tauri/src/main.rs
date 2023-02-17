@@ -54,7 +54,7 @@ fn set_write_lock() -> Result<String, String> {
 }
 
 fn get_config_path_full() -> Result<String, String> {
-  match env::home_dir() {
+  match home::home_dir() {
     Some(path) => {
       let config_path: String =
           "\\Documents\\My Games\\Rising Storm 2\\ROGame\\Config\\ROEngine.ini".to_owned();
